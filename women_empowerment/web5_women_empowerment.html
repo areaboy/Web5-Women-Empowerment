@@ -1,0 +1,2160 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ 
+<title>Web5 Women Empowerment</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="keywords" content="" />
+  <script src="scripts/jquery.min.js"></script>
+
+  <script src="scripts/bootstrap.min.js"></script>
+<link type="text/css" rel="stylesheet" href="scripts/bootstrap.min.css">
+
+<link type="text/css" rel="stylesheet" href="css/store2.css">
+<script src="scripts/session.js"></script>
+<script src="scripts/moment.js"></script>
+	<script src="scripts/livestamp.js"></script>
+
+
+
+<style>
+.data_cssx{
+background:#ddd;
+padding:4px;
+//height:30px;
+border:none;
+color:black;
+border-radius:20%;
+font-size:16px;
+//text-align:center;
+width:250px;
+
+
+}
+
+
+.data_cssx:hover{
+background:orange;
+color:black;
+
+}
+
+</style>
+
+<script>
+
+window.addEventListener('load', function(e) {
+    if (navigator.onLine) {
+$('#network_status').html("<br><br><div style='color:white;background:green;padding:10px;border:none;'>Your network status is Online </div>");
+
+    } else {
+$('#network_status').html("<br><br><div style='color:white;background:red;padding:10px;border:none;'>Your network status is Offline. Please Ensure You are Online to use this app... </div>");
+
+    }
+}, false);
+
+
+
+window.addEventListener('online', function(e) {
+$('#network_status').html("<br><br><div style='color:white;background:green;padding:10px;border:none;'>Your are back is Online </div>");
+
+}, false);
+            
+window.addEventListener('offline', function(e) {
+$('#network_status').html("<br><br><div style='color:white;background:red;padding:10px;border:none;'>Your Internet Connection is Down </div>");
+
+}, false);
+
+
+   </script>
+
+
+<script  type="module">
+
+$(document).ready(async function(){
+$('.loader_init_did').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Connecting DID.....</div>');
+ });
+
+
+
+import { Web5 } from 'https://cdn.jsdelivr.net/npm/@web5/api@0.8.3/dist/browser.mjs';
+ 
+ let web5;
+  let myDid;
+  let record;
+
+
+	  ({ web5, did: myDid } = await Web5.connect({
+      sync: "5s",
+    }));
+
+// check if browser.mjs has been loaded from cdn by initializing DID
+
+$(document).ready(async function(){
+
+if(myDid != ''){
+
+ const access_mydid = myDid;
+ const start = access_mydid.substring(0, 30);
+ const end = '...';
+ const mydidx =  start + end;
+ $('.myDid').html(mydidx);
+$('.myDid_value').val(mydidx).value;
+
+$('.myDid_did_value').val(myDid).value;
+
+
+$('.loader_init_did').hide();
+$('.result_init_did').html("<div style='color:white;background:green;padding:8px;border:none;'> DID Successfully Connected.....</div>");
+setTimeout(function(){ $('.result_init_did').html(''); }, 5000);
+}
+ });
+
+
+
+
+
+
+
+
+  
+// build protocol
+
+
+const protocolDefinition = {
+  "protocol": "https://social-media.xyz/web5empowerment/",
+  "published": true,
+  "types": {
+    "empowermentPost": {
+      "schema": "https://social-media.xyz/schemas/empowermentPostSchema",
+      "dataFormats": ["application/json"]
+    },
+    "empowermentcomment": {
+      "schema": "https://social-media.xyz/schemas/empowermentcommentSchema",
+      "dataFormats": ["application/json"]
+    }
+  },
+  "structure": {
+    "empowermentPost": {
+      "$actions": [
+        {
+          "who": "anyone",
+          "can": "read"
+        },
+        {
+          "who": "anyone",
+          "can": "write"
+        }
+      ],
+      "empowermentcomment": {
+        "$actions": [
+          {
+            "who": "author",
+            "of": "empowermentPost",
+            "can": "write"
+          },
+          {
+            "who": "recipient",
+            "of": "empowermentPost",
+            "can": "write"
+          }
+        ]
+      }
+    }
+  }
+};
+
+
+
+$(document).ready(async function(){
+// Create and configure Protocols
+$('#loader_create_protocols').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Updating and Checking if Protocols has been created...</div>');
+
+  const { protocols, status } = await web5.dwn.protocols.query({
+    message: {
+      filter: {
+        protocol: protocolDefinition.protocol,
+      },
+    },
+  });
+  
+  //alert(status.code);
+  //alert(protocols.length);
+  console.log(protocols);
+
+  if (status.code !== 200) {
+    alert("Error querying protocols");
+    console.error("Error querying protocols", status);
+    return;
+  }
+
+  if (protocols.length > 0) {
+    console.log("Protocol already exist");
+	$('#loader_create_protocols').hide();
+	$('#result_create_protocols').html("<div style='color:white;background:green;padding:8px;border:none;'> Protocols Already Exist....</div>");
+setTimeout(function(){ $('#result_create_protocols').html(''); }, 5000);
+		
+    return;
+  }
+
+  // configure protocol on local DWN
+  const { status: configureStatus, protocol } =
+    await web5.dwn.protocols.configure({
+      message: {
+        definition: protocolDefinition,
+      },
+    });
+
+  console.log("Protocol configured", configureStatus, protocol);
+
+  // configure protocol on remote DWN
+  const { status: configureRemoteStatus } = protocol.send(myDid);
+  //console.log("Protocol configured on remote DWN", configureRemoteStatus);
+  
+  //configure protocol on remote DWN
+  //const { status} = protocol.send(myDid);
+  console.log("Status:", status);
+    console.log("Status code:", status.code);
+
+if(status.code ==200){
+$('#loader_create_protocols').hide();
+	$('#result_create_protocols').html("<div style='color:white;background:green;padding:8px;border:none;'> Protocols updated Successfully....</div>");
+setTimeout(function(){ $('#result_create_protocols').html(''); }, 5000);
+
+}
+
+});
+
+var schema_uri ="https://schema.org/profile_data";
+var schema_uri_agoravideocall ="https://schema.org/agoravideocall";
+
+
+
+
+// update users profile
+$(document).ready(async function(){
+$('.update_btn').click(async function(){
+var fullname = $('#fullname').val();
+var phone_no = $('#phone_no').val();
+var email = $('#email').val();
+
+
+//preparing Email for validations
+   var atemail = email.indexOf("@");
+   var dotemail = email.lastIndexOf(".");
+
+
+
+ if(fullname==""){
+alert('Please Enter Fullname');
+//return false;   
+}
+else if(phone_no==""){
+alert('Please Enter Phone No.');
+//return false;   
+}
+else if(email==""){
+alert('Please Enter Email Address');
+//return false;   
+}
+else  if (atemail < 1 || ( dotemail - atemail < 2 )){
+alert("Please enter valid email Address")
+}
+
+
+else{
+
+$('#loader_update').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Updating Profile...</div>');
+
+// check if user has already created profile
+  const { records } = await web5.dwn.records.query({
+    message: {
+      filter: {
+        schema: schema_uri,
+	dataFormat: 'application/json'
+      },
+      dateSort: "createdAscending",
+    },
+  });
+
+  console.log("Saved records", records.length);
+
+
+
+
+if(records.length >  0){
+$('#loader_update').html("<div style='color:white;background:red;padding:8px;border:none;'>Profile Already Created...</div>");
+setTimeout(function(){ $('#result_update').html(''); }, 5000);
+return false;
+}
+
+
+
+
+
+const messageData = {
+            fullname: fullname,
+	    phone_no: phone_no,
+            email: email
+        };
+
+        const { record, status } = await web5.dwn.records.create({
+            data: messageData,
+            message: {
+                schema: schema_uri,
+                dataFormat: "application/json"
+            },
+        });
+//alert(record.id);
+//alert(status.code);
+//alert(status.detail);
+
+//if(status.code==202){
+
+if(record.id != ''){
+$('#fullname').val('');
+$('#phone_no').val('');
+$('#email').val('');
+$('#loader_update').hide();
+$('#result_update').html("<div style='color:white;background:green;padding:8px;border:none;'>Profile Updated Successfully</div>");
+setTimeout(function(){ $('#result_update').html(''); }, 5000);
+location.reload();
+}else{
+
+
+$('#loader_update').hide();
+$('#result_update').html("<div style='color:white;background:red;padding:8px;border:none;'>Profile Updates Failed. Ensure There is Internet Connection</div>");
+setTimeout(function(){ $('#result_update').html(''); }, 5000);
+
+
+
+
+}
+
+
+
+}
+
+ });
+ });
+
+
+
+
+
+
+// Agora Videocall API Settings Submission
+
+
+$(document).ready(async function(){
+$('.agora_update_btn').click(async function(){
+var agora_appid = $('#agora_appid').val();
+
+
+
+ if(agora_appid==""){
+alert('Please Enter Agora APPID');
+//return false;   
+}
+
+else{
+
+$('#loader_agora_update').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Updating Agora Videocall Settings...</div>');
+
+// check if user has already created Agora Settings
+  const { records } = await web5.dwn.records.query({
+    message: {
+      filter: {
+        schema: schema_uri_agoravideocall,
+	dataFormat: 'application/json'
+      },
+      dateSort: "createdAscending",
+    },
+  });
+
+  console.log("Saved records", records.length);
+
+
+
+
+if(records.length >  0){
+$('#loader_agora_update').html("<div style='color:white;background:red;padding:8px;border:none;'>Agora API Settings already Created...</div>");
+setTimeout(function(){ $('#result_agora_update').html(''); }, 5000);
+return false;
+}
+
+
+
+
+
+const messageData = {
+            agora_appid: agora_appid
+        };
+
+        const { record, status } = await web5.dwn.records.create({
+            data: messageData,
+            message: {
+                schema: schema_uri_agoravideocall,
+                dataFormat: "application/json"
+            },
+        });
+//alert(record.id);
+//alert(status.code);
+//alert(status.detail);
+
+//if(status.code==202){
+
+if(record.id != ''){
+$('#agora_appid').val('');
+$('#loader_agora_update').hide();
+$('#result_agora_update').html("<div style='color:white;background:green;padding:8px;border:none;'>Agora Videocall Settings Updated Successfully</div>");
+setTimeout(function(){ $('#result_agora_update').html(''); }, 5000);
+location.reload();
+}else{
+
+
+$('#loader_agora_update').hide();
+$('#result_agora_update').html("<div style='color:white;background:red;padding:8px;border:none;'>Agora  Videocall Settings Updates Failed. Ensure There is Internet Connection</div>");
+setTimeout(function(){ $('#result_agora_update').html(''); }, 5000);
+
+
+
+
+}
+
+
+
+}
+
+ });
+ });
+
+
+
+
+
+
+
+
+$(document).ready(async function(){
+$('#copy_btn').click(async function(){
+//$(document).on( 'click', '.copy_btn', async function(){ 
+
+  await navigator.clipboard.writeText(myDid);
+  alert("your DID copied to clipboard.  Please Paste and save it to a safe Place.");
+  //alert(myDid);
+});
+});
+
+
+
+
+$(document).ready(function(){
+$('.download_btn').click(function(){
+//$(document).on( 'click', '.download_btn', function(){ 
+
+         const link = document.createElement("a");
+         const data_to_save  =  myDid;
+         const file = new Blob([data_to_save], { type: 'text/plain' });
+         link.href = URL.createObjectURL(file);
+         link.download = "MyDID.txt";
+         link.click();
+         URL.revokeObjectURL(link.href);
+alert('DID Successfully Downloaded...');
+
+
+});
+
+});
+  
+
+// fetch profile info
+
+
+
+
+$(document).ready(async function(){
+// Fetch records
+$('#loader_rec').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Fetching Users Profile Data...</div>');
+
+  const { records } = await web5.dwn.records.query({
+    message: {
+      filter: {
+        schema: schema_uri,
+	dataFormat: 'application/json'
+      },
+      dateSort: "createdAscending",
+    },
+  });
+
+  console.log("Saved records", records.length);
+console.log("records", records);
+
+
+
+if(records.length > 0){
+$('#loader_rec').hide();
+//$('#result_rec').html("<div style='color:white;background:green;padding:8px;border:none;'>Profile  Successfully Retrieved</div>");
+}else{
+
+$('#loader_rec').hide();
+$('#result_rec').html("<div style='color:white;background:red;padding:8px;border:none;'>Your Profile Data is Empty.Please Update...</div>");
+
+}
+
+
+for (let record of records) {
+  const rec = await record.data.json();
+  //console.log(rec.image);
+const fullname = rec.fullname;
+const phone_no = rec.phone_no;
+const email = rec.email;
+const record_id = record.id;
+const author = record.author;
+const target = record.target;
+
+var arr = fullname.split(" ");
+var first = arr[0];
+var second = arr[1];
+
+
+const xfirst = first.substring(0, 1);
+const xsecond = second.substring(0, 1);
+
+const image = xfirst + xsecond;
+
+//alert(image);
+
+
+
+
+
+$('#p_access_fullname').html(fullname);
+$('.author_fullname').val(fullname).value;
+$('.author_image').val(image).value;
+$('.author_email').val(email).value;
+
+
+/*
+  var tr_strx = "<span >" +
+  "<img src='" + image + "' class='img_circled' style='border-style: solid; border-width:3px; border-color:#3b5998;border-radius:50%;min-width:40px;max-width:40px;max-height:40px;min-height:40px' />" +
+"</span>";
+
+  var tr_strx = "<span >" +
+"<span style='color: #fff; display: block; max-width:40px;  border-radius: 45px; border: 3px solid #3b5998; background:fuchsia; padding: 16px 4px;font-size:20px;'>" + image + "</span>" +
+"</span>";
+
+
+*/
+
+  var tr_strx = "<span >" +
+"<span  style='color: #fff; display: block; max-width:80px;max-height:80px;  border-radius: 50%; border: 3px solid #3b5998; background:fuchsia; padding:10px;font-size:60'>" + image + "</span>" +
+"</span>";
+
+                $("#data_profile").append(tr_strx);
+
+
+//console.log(image);
+
+  var tr_str = "<div class='rec_" + record_id +" well row' >" +
+  //"<div class='col-sm-3'><img src='" + image + "' class='img_circled'  /></div>" +
+                    
+"<div class='col-sm-3' style='color: #fff; display: block; max-width:55px;  border-radius: 58px; border: 3px solid #3b5998; background:fuchsia; padding: 16px 4px;font-size:30px;'>" + image + "</div>" +
+
+"<div class='col-sm-9'><div><b>Fullname: </b>" + fullname + "</div>" +
+  "<div><b>Email: </b>" + email + "</div>" +
+  "<div><b>Phone-No: </b>" + phone_no + "</div>" +
+
+ "<div class='loader-delete_" + record_id +"'></div><div class='result-delete_" + record_id +"'></div>" +                   
+"<button id='del_btn' class='btn btn-danger del_btn btn-xs' title='Delete' data-id=" + record_id +" data-fullname=" + fullname +">Delete Profile</button></div>" +
+"</div>";
+
+                $("#data_result").append(tr_str);
+
+
+
+
+
+  };
+
+
+});
+
+
+
+
+
+
+
+
+
+
+// fetch Agora Videocall API Settins info
+
+
+
+
+$(document).ready(async function(){
+// Fetch records
+$('#loader_rec_agora').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Agora Videocall API Settins info...</div>');
+
+  const { records } = await web5.dwn.records.query({
+    message: {
+      filter: {
+        schema: schema_uri_agoravideocall,
+	dataFormat: 'application/json'
+      },
+      dateSort: "createdAscending",
+    },
+  });
+
+  console.log("Saved records", records.length);
+console.log("records", records);
+
+
+
+if(records.length > 0){
+$('#loader_rec_agora').hide();
+//$('#result_rec_agora').html("<div style='color:white;background:green;padding:8px;border:none;'>Agora Videocall API Settings  Successfully Retrieved</div>");
+}else{
+
+$('#loader_rec_agora').hide();
+$('#result_rec_agora').html("<div style='color:white;background:red;padding:8px;border:none;'>Your Agora Videocall API Settings is Empty.Please Update...</div>");
+
+}
+
+
+for (let record of records) {
+  const reca = await record.data.json();
+const record_id = record.id;
+const agora_appid = reca.agora_appid;
+
+
+ const endxx = '...';
+const agora_appid_shortened = agora_appid.substring(0, 10) + endxx;
+
+
+$('#p_agora_appid').html(agora_appid);
+$('#p_agora_appid_value').val(agora_appid).value;
+
+
+
+  var tr_stra = "<div class='rec_agora" + record_id +" well row' >" +
+        
+"<div class='col-sm-12'><div><b>Agora AppID: </b>" + agora_appid_shortened + "</div>" +
+
+
+ "<div class='loader-delete-agora_" + record_id +"'></div><div class='result-delete-agora_" + record_id +"'></div>" +                   
+"<button id='del_btn_agora' class='btn btn-danger del_btn_agora btn-xs' title='Delete' data-id=" + record_id +" >Delete Data</button></div>" +
+"</div>";
+
+                $("#data_result_agora").append(tr_stra);
+
+
+
+
+
+  };
+
+
+});
+
+
+
+
+
+
+
+
+// start deleting profile
+
+$(document).ready(async function(){
+$(document).on( 'click', '.del_btn', async function(){ 
+//$('.del_btn').click(async function(){
+
+var id = $(this).data('id');
+ if(confirm("Are you sure you want to Delete Your Profile: ")){
+
+$(".loader-delete_"+id).fadeIn(400).html('<br><div style="color:black;background:#ccc;padding:4px;"><img src="ajax-loader.gif">  &nbsp;Deleting..</div>');
+
+
+const deleteResult = await web5.dwn.records.delete({
+    message: {
+      recordId: id,
+    },
+  });
+
+console.log('res: ', deleteResult);
+console.log('res stat1: ', deleteResult.status.code);
+console.log('res stat2: ', deleteResult.status.detail);
+
+
+if(deleteResult.status.code == 202){
+$(".loader-delete_"+id).hide();
+$(".result-delete_"+id).html("<div style='color:white;background:green;padding:10px;border:none;'>Record Deleted....</div>");
+location.reload();
+//$(this).parents(".rec_"+id).animate({ backgroundColor: "#fbc7c7" }, "fast").animate({ opacity: "hide" }, "slow");
+
+}else{
+
+$(".loader-delete_"+id).hide();
+$(".result-delete_"+id).html("<div style='color:white;background:red;padding:10px;border:none;'>Record Could Not be Deleted....</div>");
+setTimeout(function(){ $(".loader-delete_"+id).html(''); }, 7000);
+return false;
+
+}
+
+
+
+
+
+}
+
+// confirm ends
+
+
+//}
+
+
+});
+});
+
+
+
+// End deleting profile
+
+
+
+
+
+
+
+
+
+// start deleting Agora API Settings Starts
+
+$(document).ready(async function(){
+$(document).on( 'click', '.del_btn_agora', async function(){ 
+//$('.del_btn_agora').click(async function(){
+
+var id = $(this).data('id');
+ if(confirm("Are you sure you want to Delete Your Agora API Settings: ")){
+
+$(".loader-delete-agora_"+id).fadeIn(400).html('<br><div style="color:black;background:#ccc;padding:4px;"><img src="ajax-loader.gif">  &nbsp;Deleting..</div>');
+
+
+const deleteResult = await web5.dwn.records.delete({
+    message: {
+      recordId: id,
+    },
+  });
+
+console.log('res: ', deleteResult);
+console.log('res stat1: ', deleteResult.status.code);
+console.log('res stat2: ', deleteResult.status.detail);
+
+
+if(deleteResult.status.code == 202){
+$(".loader-delete-agora_"+id).hide();
+$(".result-delete-agora_"+id).html("<div style='color:white;background:green;padding:10px;border:none;'>Record Deleted....</div>");
+location.reload();
+//$(this).parents(".rec-agora_"+id).animate({ backgroundColor: "#fbc7c7" }, "fast").animate({ opacity: "hide" }, "slow");
+
+}else{
+
+$(".loader-delete-agora_"+id).hide();
+$(".result-delete-agora_"+id).html("<div style='color:white;background:red;padding:10px;border:none;'>Record Could Not be Deleted....</div>");
+setTimeout(function(){ $(".loader-delete-agora_"+id).html(''); }, 7000);
+return false;
+
+}
+
+
+
+
+
+}
+
+// confirm ends
+
+
+//}
+
+
+});
+});
+
+
+
+// start deleting Agora API Settings Ends
+
+
+
+
+
+
+
+
+// Add Women Contacts info starts
+
+
+$(document).ready(async function(){
+$('.pa_btn').click(async function(){
+
+
+var participant_name = $('#participant_name').val();
+var participant_email = $('#participant_email').val();
+var participant_phoneno = $('#participant_phoneno').val();
+var recipient_did  = $('#recipient_did').val();
+
+var author_image  = $('.author_image').val();
+var author_fullname  = $('.author_fullname').val();
+var agora_appid = $('.agora_appid_new').val();
+
+
+//alert(agora_appid);
+
+if(author_image==""){
+alert('Please update your Profile Data First');
+return false;
+}
+
+
+
+if(agora_appid==""){
+alert('Please update your Agora Videocall API Settings First');
+return false;
+}
+
+
+
+if(participant_name==""){
+alert('Participant Name Cannot be empty');
+return false;
+}
+
+
+
+if(participant_email==""){
+alert('Participant Email Cannot be Empty');
+//return false;
+}
+
+else if(participant_phoneno==""){
+alert('Please Enter Participant Phone No.');
+//return false;   
+}
+
+
+else if(recipient_did==""){
+alert('Please Enter Recipient DID.');
+//return false;   
+}
+
+else{
+
+$('#loader_pa').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Submiting data...</div>');
+
+var timeago = Math.floor(new Date().getTime() / 1000);
+var d_time = new Date().toLocaleString();
+
+
+var arrx = participant_name.split(" ");
+var firstx = arrx[0];
+var secondx = arrx[1];
+
+
+const xxfirst = firstx.substring(0, 1);
+const xxsecond = secondx.substring(0, 1);
+
+const participant_image = xxfirst + xxsecond;
+
+
+//alert(participant_image);
+
+var recipientDID = recipient_did;
+//alert(recipientDID);
+  const contents = {
+    participant_name: participant_name,
+    participant_email: participant_email,
+    participant_phoneno: participant_phoneno,
+    participant_image: participant_image,
+    recipient_did: recipient_did,
+    author_did: myDid,
+    author_image: author_image,
+    author_fullname: author_fullname,
+    created_time: timeago,
+    agora_appid: agora_appid,
+    agora_channel: timeago
+    };
+
+  //alert(protocolDefinition.protocol);
+//alert(protocolDefinition.types.document.schema);
+
+
+
+  try {
+    const { record } = await web5.dwn.records.create({
+      data: contents,
+      message: {
+	recipient: recipientDID,
+    schema: 'https://social-media.xyz/schemas/empowermentPostSchema',
+    dataFormat: 'application/json',
+    protocol: protocolDefinition.protocol,
+    protocolPath: 'empowermentPost'
+      },
+    });
+    const { status: sendStatus } = await record.send(recipientDID);
+//alert(status.code);
+//alert(status.detail);
+
+const record_id = record.id;
+  
+    if (sendStatus.code !== 202) {
+      console.log("Data cannot be sent to recipient DID:" + sendStatus);
+$('#loader_pa').hide();
+$('#result_pa').html("<div style='color:white;background:red;padding:8px;border:none;'>Data cannot be sent to recipient DID</div>");
+setTimeout(function(){ $('#result_pa').html(''); }, 5000);
+
+      return;
+
+    } else {
+      console.log("Data sent to recipient DID");
+
+$('#loader_pa').hide();
+$('#result_pa').html("<div style='color:white;background:green;padding:8px;border:none;'>Data Successfully Sent to Recipient</div>");
+alert('Data Successfully Sent to Recipient');
+$('#participant_name').val('');
+$('#participant_email').val('');
+$('#participant_phoneno').val('');
+
+
+// hide modal
+ $('#myModal_pa').modal('hide');
+
+setTimeout(function(){ $('#result_pa').html(''); }, 5000);
+location.reload();
+    }
+	
+	
+  } catch (e) {
+    console.error(e);
+    return;
+  }
+
+
+}
+
+ });
+ });
+ 
+// Add Women Contacts info Ends
+
+
+
+
+
+// fetch Women Participants lists starts
+
+//	dataFormat: 'application/json'
+
+$(document).ready(async function(){
+
+$('#loader_ph').fadeIn(400).html('<br><div style="color:black;background:#ddd;padding:10px;"><img src="ajax-loader.gif"> Please Wait! .Loading Participants Lists...</div>');
+
+
+const { records } = await web5.dwn.records.query({
+    message: {
+      filter: {
+ schema: 'https://social-media.xyz/schemas/empowermentPostSchema',
+      }
+    },
+  });
+
+
+console.log("total  Saved recordsx", records.length);
+console.log("total  Saved recordsx", records);
+
+
+if(records.length > 0){
+$('#loader_ph').hide();
+$('#result_ph').html("<div style='color:white;background:green;padding:8px;border:none;'>Participants  Successfully Retrieved</div>");
+setTimeout(function(){ $('#result_ph').html(''); }, 15000);
+}else{
+
+$('#loader_ph').hide();
+$('#result_ph').html("<div style='color:white;background:red;padding:8px;border:none;'>Your Women Participants List  is Empty...</div>");
+
+}
+
+
+for (let record of records) {
+  const recordx = await record.data.json();
+
+
+
+const participant_name = recordx.participant_name;
+const participant_email = recordx.participant_email;
+const participant_phoneno = recordx.participant_phoneno;
+const participant_image = recordx.participant_image;
+const recipient_did = recordx.recipient_did;
+const author_did = recordx.author_did;
+const author_image = recordx.author_image;
+const author_fullname = recordx.author_fullname;
+const created_time = recordx.created_time;
+const agora_appid = recordx.agora_appid;
+const agora_channel = recordx.agora_channel;
+
+
+ const end = '...';
+const recipient_did_shortened = recordx.recipient_did.substring(0, 15) + end;
+
+const recipient_did_shortened2 = recordx.recipient_did.substring(0, 50) + end;
+
+
+const author_did_shortened = recordx.author_did.substring(0, 50) + end;
+
+const record_id_docs = record.id;
+const record_id = record.id;
+const author = record.author;
+const target = record.target;
+
+var record_timeago = "<span>" +
+"<span data-livestamp='" + created_time + "'></span>" +
+ "</span>";
+$('#docs_timeago').html(record_timeago);
+
+var record_image = "<span>" +
+"<img src='" + author_image + "'  style='border-style: solid; border-width:3px; border-color:#ec5574;border-radius:50%;min-width:100px;max-width:100px;max-height:100px;min-height:100px'/>" +
+ "</span>";
+$('#docs_image').html(record_image);
+
+
+  var tr_strx = "<span >" +
+"<span  style='color: #fff; display: block; max-width:80px;max-height:80px;  border-radius: 50%; border: 3px solid #3b5998; background:fuchsia; padding:10px;font-size:60'><b style='font-size:40px'>" + participant_image + "</b></span>" +
+"</span>";
+
+
+
+var videocall_link = "<button  title='VideoCall' style='color:white;' class='btn btn-primary btn-sm'>" +
+"<a title='VideoCall' target='_blank' style='color:white;' href='agora_videocall/index.html?author_did=" + author_did_shortened + "&recipient_did=" + recipient_did_shortened + "&appidx=" + agora_appid + "&channelx=" + agora_channel + "&token='>Video Calls</a>" +
+ "</button>";
+
+
+
+       var tr_strrecord = "<div class='rec-pa_" + record_id +" well' >" +
+	   
+"<div>" + tr_strx + "</div>" +
+
+
+"<div><b> Participant Fullname: </b>" + participant_name + "</div>" +
+"<div><b>Participant Email:</b> " + participant_email + "</div>" +
+"<div><b>Participant PhoneNo: </b> " + participant_phoneno + "</div>" +
+"<div><b>Recipient DID: </b> " + recipient_did_shortened + "</div>" +
+  "<div><b> Created Time: </b> <span data-livestamp='" + created_time + "'></span>  </div>" +
+
+
+ "<br><div class='row'>"+
+"<button class='btn btn-warning load_btn_docs btn-sm comment_fetch_btn' title='Comments' data-agora_appid=\""+ agora_appid +"\" data-agora_channel=\""+ agora_channel +"\" data-participant_name=\""+ participant_name +"\"  data-participant_image=\""+ participant_image +"\"   data-id=" + record_id +"  data-recipient_did=\""+ recipient_did +"\" data-recipient_did_shortened=\""+ recipient_did_shortened +"\" data-author_did=\""+ author_did +"\" data-author_image=\""+ author_image +"\" data-author_fullname=\""+ author_fullname +"\" data-created_time=\""+ created_time +"\" data-toggle='modal' data-target='#myModal_comment'>Comment & Discuss</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+"<span>" + videocall_link + "</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+
+// "<button class='btn btn-primary load_btn_docs btn-sm' title='Video Call' data-agora_appid=\""+ agora_appid +"\" data-agora_channel=\""+ agora_channel +"\" data-participant_name=\""+ participant_name +"\"  data-participant_image=\""+ participant_image +"\"   data-id=" + record_id +" data-recipient_did=\""+ recipient_did +"\" data-recipient_did_shortened=\""+ recipient_did_shortened +"\" data-author_did=\""+ author_did +"\" data-author_image=\""+ author_image +"\" data-author_fullname=\""+ author_fullname +"\" data-created_time=\""+ created_time +"\" data-toggle='modal' data-target='#myModal_videocall'>Video Call </button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+
+"<span class='loader-delete-pa_" + record_id +"'></span><span class='result-delete-pa_" + record_id +"'></span>" +  
+"<button id='del_btn_pa' class='btn btn-danger del_btn_pa btn-sm' title='Delete' data-id=" + record_id +" data-author_did=\""+ author_did +"\"  >Delete Participants</button>" +
+
+"</div>" +
+
+"</div>";
+
+                $("#data_result_participant").append(tr_strrecord);
+
+
+  };
+
+  
+});
+
+// Fetch participant list ends
+
+
+
+
+
+// start deleting participants lists
+
+$(document).ready(async function(){
+$(document).on( 'click', '.del_btn_pa', async function(){ 
+//$('.del_btn_pa').click(async function(){
+
+var id = $(this).data('id');
+var author_id = $(this).data('author_did');
+var myDid_did_value  = $('.myDid_did_value').val();
+//alert(id);
+//alert(author_id);
+//alert(myDid_did_value);
+
+/*
+if(myDid_did_value != author_id){
+alert('You Cannot Delete Documents Uploaded by Another User');
+return false;
+}
+*/
+
+ if(confirm("Are you sure you want to Delete this Participant: ")){
+
+$(".loader-delete-pa_"+id).fadeIn(400).html('<br><div style="color:black;background:#ccc;padding:4px;"><img src="ajax-loader.gif">  &nbsp;Deleting..</div>');
+
+
+const deleteResult = await web5.dwn.records.delete({
+    message: {
+      recordId: id,
+    },
+  });
+
+console.log('res: ', deleteResult);
+console.log('res stat1: ', deleteResult.status.code);
+console.log('res stat2: ', deleteResult.status.detail);
+
+
+if(deleteResult.status.code == 202){
+$(".loader-delete-pa_"+id).hide();
+$(".result-delete-pa_"+id).html("<div style='color:white;background:green;padding:10px;border:none;'>Record Deleted....</div>");
+location.reload();
+//$(this).parents(".rec-pa_"+id).animate({ backgroundColor: "#fbc7c7" }, "fast").animate({ opacity: "hide" }, "slow");
+
+}else{
+
+$(".loader-delete-pa_"+id).hide();
+$(".result-delete-pa_"+id).html("<div style='color:white;background:red;padding:10px;border:none;'>Record Could Not be Deleted....</div>");
+setTimeout(function(){ $(".loader-delete-pa_"+id).html(''); }, 7000);
+return false;
+
+}
+
+
+
+
+
+}
+
+// confirm ends
+
+
+//}
+
+
+});
+});
+
+
+
+// End deleting Participant list
+
+
+
+
+
+
+
+// load data in modal start
+
+$(document).ready(async function(){
+$(document).on( 'click', '.load_btn_docs', async function(){ 
+
+//$('.load_btn_docs').click(async function(){
+
+var id = $(this).data('id');
+
+var image = $(this).data('author_image');
+var title = $(this).data('title');
+var author_fullname = $(this).data('author_fullname');
+var file_name_docs = $(this).data('file_name_docs');
+var extracted_text = $(this).data('extracted_text');
+var created_timeago = $(this).data('created_time');
+var author_did= $(this).data('author_did');
+var recipient_did = $(this).data('recipient_did');
+var desc = $(this).data('desc');
+var docs_base64 = $(this).data('file_uploads_docs');
+var agora_appid = $(this).data('agora_appid');
+var agora_channel = $(this).data('agora_channel');
+
+
+$('#chat_agora_appid_value').val(agora_appid).value;
+$('#chat_agora_channel_value').val(agora_channel).value;
+
+
+
+//alert(docs_base64);
+
+var rec_image = "<span>" +
+"<img src='" + image + "'  style='border-style: solid; border-width:3px; border-color:#ec5574;border-radius:50%;min-width:100px;max-width:100px;max-height:100px;min-height:100px'/>" +
+ "</span>";
+
+
+
+var rec_art = "<span>" +
+"<img src='" + docs_base64 + "'  style='border-style: solid; border-width:3px; border-color:#ec5574;border-radius:5%;min-width:200px;max-width:200px;max-height:200px;min-height:200px'/>" +
+ "</span>";
+
+$('.rec_arts').html(rec_art);
+
+//shortened DID
+ const start1 = recipient_did.substring(0, 50);
+ const end1 = '...';
+ const recipient_did_short =  start1 + end1;
+
+ const start2 = author_did.substring(0, 50);
+ const end2 = '...';
+ const author_did_short =  start2 + end2;
+
+
+
+$('.p_title').html(title);
+$('.p_image').html(rec_image);
+$('.p_author_fullname').html(author_fullname);
+$('.p_created_timeago').html(created_timeago);
+$('.p_author_did').html(author_did_short);
+$('.p_recipient_did').html(recipient_did_short);
+$('.p_docs_base64').html(docs_base64);
+
+$('.docs_base64_value').val(docs_base64).value;
+$('.id_value').val(id).value;
+
+
+$('.a_value').val(author_did).value;
+$('.r_value').val(recipient_did).value;
+
+//alert(author_did);
+//alert(recipient_did);
+
+
+
+
+var rec_timeago = "<span>" +
+"<span data-livestamp='" + created_timeago + "'></span>" +
+ "</span>";
+
+$('.p_timeago').html(rec_timeago);
+
+
+});
+});
+
+// Load Data in Modal End 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// start Adding comments
+
+$(document).ready(async function(){
+$('.comment_add_btn').click(async function(){
+//$(document).on( 'click', '.comment_add_btn', async function(){ 
+
+
+var comment_msg =  $('.comment_msg').val();
+var postRecord_id  = $('.id_value').val();
+var timeago = Math.floor(new Date().getTime() / 1000);
+var author_image  = $('.author_image').val();
+var author_fullname  = $('.author_fullname').val();
+var post_author_did = $('.a_value').val();
+var post_recipient_did = $('.r_value').val();
+
+
+
+
+var author_image =  $('.author_image').val()
+if(author_image==""){
+alert('Please update your Profile Data before you can comment');
+return false;
+}
+
+
+//var commentRecipient = post_recipient_did;
+
+
+
+if(myDid !=post_author_did){
+var commentRecipient = post_author_did;
+//console.log("Recipient DID1:", commentRecipient);
+}
+
+
+if(myDid !=post_recipient_did){
+var commentRecipient = post_recipient_did;
+//console.log("Recipient DID2:", commentRecipient);
+}
+
+
+if(comment_msg ==''){
+alert('Comment Cannot be empty');
+return false;
+}
+
+
+if(author_image==""){
+alert('Please Ensure that you have updated Your Personal Profile Data');
+return false;
+}
+
+$(".loader_comment_add").fadeIn(400).html('<br><div style="color:black;background:#ccc;padding:4px;"><img src="ajax-loader.gif">  &nbsp;Please Wait Comments is being Submitted...</div><br>');
+
+const commentData = {
+    comment_msg: comment_msg,
+    postRecord_id: postRecord_id,
+    recipient_did: commentRecipient,
+    author_did: myDid,
+    author_image: author_image,
+    author_fullname: author_fullname,
+    created_time: timeago
+        };
+
+  const { record: commentRecord, status: createStatus } =
+    await web5.dwn.records.create({
+      data: commentData,
+      message: {
+       protocol: protocolDefinition.protocol,
+      protocolPath: 'empowermentPost/empowermentcomment',
+      parentId: postRecord_id,
+      contextId: postRecord_id,
+        schema: "https://social-media.xyz/schemas/empowermentcommentSchema",
+        dataFormat: 'application/json'
+      },
+    });
+
+  const data = await commentRecord.data.json();
+  const comment = { commentRecord, data, id: commentRecord.id };
+  const { status: sendStatus } = await commentRecord.send(commentRecipient);
+
+  if (sendStatus.code !== 202) {
+$('.loader_comment_add').hide();
+$('.result_comment_add').html("<div style='color:white;background:red;padding:8px;border:none;'>Failure: Comment cannot be Sent to Recipient</div>");
+setTimeout(function(){ $('.result_comment_add').html(''); }, 5000);
+    return;
+  } else {
+$('.loader_comment_add').hide();
+$('.result_comment_add').html("<div style='color:white;background:green;padding:8px;border:none;'>Comment Sent to Recipient</div>");
+setTimeout(function(){ $('.result_comment_add').html(''); }, 5000);
+$('.comment_msg').val('');
+
+//alert(commentRecord.id);
+
+
+
+  var tr_com = "<span >" +
+"<span  style='color: #fff; display: block; max-width:60px;max-height:60px;  border-radius: 50%; border: 3px solid #3b5998; background:fuchsia; padding:10px;font-size:60'><b style='font-size:30px'>" + author_image + "</b></span>" +
+"</span>";
+
+
+var tr_comment_new = "<div class='rec-comment_" + commentRecord.id +" well row' >" +
+
+//"<div><img src='" + author_image + "' class='img_circled' style='border-style: solid; border-width:3px; border-color:#ec5574;border-radius:50%;min-width:40px;max-width:40px;max-height:40px;min-height:40px' /></div>" +
+                   
+
+
+"<div>" + tr_com + "</div>" +
+"<div><b>Fullname: </b>" + author_fullname + "</div>" +
+ "<div><b>Comment: </b>" + comment_msg + "</div>" +
+ "<div><span data-livestamp='" + timeago + "'></span>  </div>" +
+
+
+ "<div class='loader-delete-comment_" + commentRecord.id +"'></div><div class='result-delete-comment_" + commentRecord.id +"'></div>" +                   
+"<button id='del_btn_comment' class='btn btn-danger del_btn_comment btn-xs' title='Delete' data-id=" + commentRecord.id +" >Delete Comment</button></div>" +
+"</div>";
+
+                //$("#data_result_comment_new").append(tr_comment_new);
+                $("#data_result_comment").append(tr_comment_new);
+
+
+
+  }
+
+});
+});
+
+// End Adding comments
+
+
+
+
+
+
+
+// start fetching comments
+$(document).ready(async function(){
+//$('.comment_fetch_btn').click(async function(){
+$(document).on( 'click', '.comment_fetch_btn', async function(){ 
+
+//hide new comment div
+//$('#data_result_comment_new').hide();
+
+
+var id = $(this).data('id');
+$(".loader_comment_fetch").fadeIn(400).html('<br><div style="color:black;background:#ccc;padding:4px;"><img src="ajax-loader.gif">  &nbsp;Please Wait Fetching Comments.</div>');
+const postRecord_id = id;
+
+const { records } = await web5.dwn.records.query({
+    message: {
+        filter: {
+            parentId: postRecord_id
+        }
+    }
+});
+console.log("total comments", records.length);
+
+if(records.length > 0){
+$('.loader_comment_fetch').hide();
+$('.result_comment_fetch').html("<div style='color:white;background:green;padding:8px;border:none;'>Comment List  Successfully Retrieved</div>");
+setTimeout(function(){ $('.result_comment_fetch').html(''); }, 15000);
+}else{
+
+$('.loader_comment_fetch').hide();
+$('.result_comment_fetch').html("<div style='color:white;background:red;padding:8px;border:none;'>No Comment Added Yet...</div>");
+}
+
+for (let record of records) {
+const record_comment = await record.data.json();
+const author_fullname = record_comment.author_fullname;
+const author_image =    record_comment.author_image;
+const recipient_did =   record_comment.recipient_did;
+const author_did =      record_comment.author_did;
+const comment_msg =     record_comment.comment_msg;
+const postRecord_id =   record_comment.postRecord_id;
+const created_time =    record_comment.created_time;
+const record_id =       record.id;
+
+
+  var tr_com2 = "<span >" +
+"<span  style='color: #fff; display: block; max-width:60px;max-height:60px;  border-radius: 50%; border: 3px solid #3b5998; background:fuchsia; padding:10px;font-size:60'><b style='font-size:30px'>" + author_image + "</b></span>" +
+"</span>";
+
+var tr_comment = "<div class='rec-comment_" + record_id +" well row' >" +
+//"<div><img src='" + author_image + "' class='img_circled' style='border-style: solid; border-width:3px; border-color:#ec5574;border-radius:50%;min-width:40px;max-width:40px;max-height:40px;min-height:40px' /></div>" +
+
+"<div>" + tr_com2 + "</div>" +                   
+"<div><b>Fullname: </b>" + author_fullname + "</div>" +
+ "<div><b>Comment: </b>" + comment_msg + "</div>" +
+ "<div><span data-livestamp='" + created_time + "'></span>  </div>" +
+
+
+ "<div class='loader-delete-comment_" + record_id +"'></div><div class='result-delete-comment_" + record_id +"'></div>" +                   
+"<button id='del_btn_comment' class='btn btn-danger del_btn_comment btn-xs' title='Delete' data-id=" + record_id +" >Delete Comment</button></div>" +
+"</div>";
+
+                $("#data_result_comment").append(tr_comment);
+
+}
+
+});
+});
+
+// end fetching comments
+
+
+
+
+
+// start deleting comment
+
+$(document).ready(async function(){
+$(document).on( 'click', '.del_btn_comment', async function(){ 
+//$('.del_btn_comment').click(async function(){
+
+var id = $(this).data('id');
+
+
+ if(confirm("Are you sure you want to Delete this comment: ")){
+
+$(".loader-delete-comment_"+id).fadeIn(400).html('<br><div style="color:black;background:#ccc;padding:4px;"><img src="ajax-loader.gif">  &nbsp;Deleting comment..</div>');
+
+
+const deleteResult = await web5.dwn.records.delete({
+    message: {
+      recordId: id,
+    },
+  });
+
+console.log('res: ', deleteResult);
+console.log('res stat1: ', deleteResult.status.code);
+console.log('res stat2: ', deleteResult.status.detail);
+
+
+if(deleteResult.status.code == 202){
+$(".loader-delete-comment_"+id).hide();
+$(".result-delete-comment_"+id).html("<div style='color:white;background:green;padding:10px;border:none;'>Record Deleted....</div>");
+//location.reload();
+$(this).parents(".rec-comment_"+id).animate({ backgroundColor: "#fbc7c7" }, "fast").animate({ opacity: "hide" }, "slow");
+
+}else{
+
+$(".loader-delete-comment_"+id).hide();
+$(".result-delete-comment_"+id).html("<div style='color:white;background:red;padding:10px;border:none;'>Record Could Not be Deleted....</div>");
+setTimeout(function(){ $(".loader-delete-comment_"+id).html(''); }, 7000);
+return false;
+
+}
+
+
+
+
+
+}
+
+// confirm ends
+
+
+//}
+
+
+});
+});
+
+
+
+// End deleting comment
+
+
+
+
+
+
+$(document).ready(async function(){
+$('#vcall_btn').click(async function(){
+
+var agora_appid =  $('.chat_agora_appid_value_new').val();
+var agora_channel =  $('.chat_agora_channel_value_new').val();
+
+// set sessions
+
+sessionStorage.setItem('access_appid', agora_appid);
+sessionStorage.setItem('access_channel', agora_channel);
+
+alert(agora_appid);
+
+alert(agora_channel);
+
+alert('ok');
+
+window.location.href='agora_videocall/index.html';
+
+});
+});
+
+
+
+
+$(document).ready(async function(){
+$('.refresh_btn').click(async function(){
+alert('Page is being Refreshed');
+location.reload();
+
+});
+});
+
+
+
+
+// clear Comment Modal div content on modal closef closed
+$(document).ready(function(){
+
+$("#myModal_comment").on("hidden.bs.modal", function(){
+    //$(".modal-body").html("");
+ $('.comment_hide_on_modal_close').empty(); 
+//$('#q').val(''); 
+});
+
+});
+
+
+</script>
+
+
+
+
+
+
+
+</head>
+<body>
+<!-- start column nav-->
+
+
+<div class="text-center">
+<nav class="navbar navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navgator">
+        <span class="navbar-header-collapse-color icon-bar"></span>
+        <span class="navbar-header-collapse-color icon-bar"></span>
+        <span class="navbar-header-collapse-color icon-bar"></span> 
+        <span class="navbar-header-collapse-color icon-bar"></span>                       
+      </button>
+     <li class="navbar-brand home_click imagelogo_li_remove" ><img title='-logo' alt='-logo' class="img-rounded imagelogo_data" src="logo.png"></li>
+    </div>
+    <div class="collapse navbar-collapse" id="navgator">
+
+
+
+      <ul class="nav navbar-nav navbar-right">
+
+ <li style='' class="navgate_no">
+<span id='data_profile'></span>
+</li>
+ <li style='' class="navgate_no">
+<a  style="color:white;font-size:14px;">
+<span class="category_post1" id='p_access_fullname'></span></a>
+</li>
+
+
+
+ <li style='' class="navgate_no">
+<a title='Refresh Page'  style="color:white;font-size:14px;">
+<button class="category_post1 refresh_btn">Refresh Page</button></a></li>
+
+
+
+ <li style='' class="navgate_no">
+<a title='Logout' href='logout.html' style="color:white;font-size:14px;">
+<button class="category_post1">Logout</button></a></li>
+
+      </ul>
+
+
+    </div>
+  </div>
+
+
+
+</nav>
+ </div>
+
+<!-- end column nav-->
+
+
+
+
+
+
+<br />
+<br />
+
+
+
+
+<div>
+
+<div class='row'>
+
+<input  type='hidden' class='id_value' value=''>
+
+<input  type='hidden' id='p_agora_appid_value' class='agora_appid_new' value='' >
+
+<input  type='hidden' class='author_image' value=''>
+<input  type='hidden' class='author_fullname' value=''>
+
+<input  type='hidden' class='author_did_value' value=''>
+<input  type='hidden' class='myDid_did_value' value=''>
+
+
+
+<input  type='hidden' class='a_value' value=''>
+<input  type='hidden' class='r_value' value=''>
+
+
+<div  style='width:300px;' id='network_status'></div>
+<center><h3>Web5 Women Empowerment</h3></center>
+<center style='font-size:20px'>Welcome: <span style='color:#3b5998;font-size:20px' class='myDid'></span>
+&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+<button class="category_post1 copy_btn" id="copy_btn"   title="Copy DID">Copy DID</button>&nbsp;&nbsp;&nbsp;&nbsp;
+<button class="category_post1 download_btn" id="download_btn"  title="Download DID">Download DID</button>
+
+
+
+</center>
+<br>
+
+
+<center>
+<div class='loader_init_did'></div>
+<div class='result_init_did'></div>
+
+<div id="loader_init_did"></div>
+<div id="result_init_did"></div>
+
+
+
+<div id="loader_create_protocols"></div>
+<div id="result_create_protocols"></div>
+
+
+</center>
+
+
+
+
+
+<!-- profile  Modal start -->
+
+
+
+<div id="myModal_profile" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header"  style='background:#3b5998;color:white;padding:10px;'>
+        <h4 class="modal-title">Update Your Profile Data</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+
+
+Easily Update Your Profile  Data<br><br>
+
+
+
+ <div class="form-group">
+              <label> Enter Fullname</label>
+              <input type="text" class="col-sm-12 form-control" id="fullname" name="fullname" placeholder="Enter Fullname" />
+            </div>
+<br>
+
+ <div class="form-group">
+              <label> Enter Phone No. (Start with + sign)</label>
+              <input type="text" class="col-sm-12 form-control" id="phone_no" name="phone_no" placeholder="Enter Phone No." />
+            </div>
+<br>
+
+ <div class="form-group">
+              <label> Enter Email. </label>
+              <input type="text" class="col-sm-12 form-control" id="email" name="email" placeholder="Enter Email." />
+            </div>
+<br>
+
+
+ <div class="form-group col-sm-12">
+			<div id="loader_update"></div>
+                        <div id="result_update"></div>
+                    </div>
+
+                    <input type="button" id="update_btn" class="pull-right btn btn-primary update_btn" value="Update" />
+
+
+      </div>
+<br><br>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button style='float:left' type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- profile Modal ends -->
+
+
+
+
+
+
+
+
+
+<!-- Agora Videocall API Settings  Modal start -->
+
+
+
+<div id="myModal_agora" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header"  style='background:#3b5998;color:white;padding:10px;'>
+        <h4 class="modal-title">Agora Videocall API Settings</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+
+
+
+
+ <div class="form-group">
+              <label> Enter Agora APPID</label>
+              <input type="text" class="col-sm-12 form-control" id="agora_appid" name="agora_appid" placeholder="Enter Agora APPID" />
+            </div>
+<br>
+
+
+ <div class="form-group col-sm-12">
+			<div id="loader_agora_update"></div>
+                        <div id="result_agora_update"></div>
+                    </div>
+
+                    <input type="button" id="agora_update_btn" class="pull-right btn btn-primary agora_update_btn" value="Update" />
+
+
+      </div>
+<br><br>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button style='float:left' type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!--  Agora Videocall API Settings ends -->
+
+
+
+
+
+
+
+
+
+<!-- participant  Modal start -->
+
+
+
+<div id="myModal_pa" class="modal fade" role="dialog">
+  <div class="modal-dialog modal-lg">
+
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header"  style='background:#3b5998;color:white;padding:10px;'>
+        <h4 class="modal-title">Add Women Participants</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+
+
+
+
+ <div class="form-group">
+              <label> Enter Participant Fullname</label>  <span style='color:red'> Format: Lastname Firstname  (Eg. Esedo Fredrick)</span>
+              <input type="text" class="col-sm-12 form-control" id="participant_name" name="participant_name" placeholder=" Enter Participant Fullname" />
+            </div>
+<br>
+
+ <div class="form-group">
+              <label> Enter Participant Email</label>
+              <input type='text' class="col-sm-12 form-control" id="participant_email" name="participant_email" placeholder=" Enter Participant Email" >
+            </div>
+<br>
+
+ <div class="form-group">
+              <label> Enter Participant Phoneno.</label>
+              <input type='text'  class="col-sm-12 form-control" id="participant_phoneno" name="participant_phoneno" placeholder=" Enter Participant Phoneno." >
+            </div>
+<br>
+
+
+ <div class="form-group">
+              <label style='color:#3b5998'>Enter Recipient DID</label>
+              <input type="text" class="col-sm-12 form-control" id="recipient_did" name="recipient_did" placeholder="Eg. did:ion:EiCSd_cSGbqZp..." />
+            </div>
+<br>
+
+
+
+<br>
+
+ <div class="form-group col-sm-12">
+<div id="loader_pa"></div>
+<div id="result_pa"></div>
+                    <input type="button"  class="pull-right btn btn-primary pa_btn" value="Add Participants" />
+</div>
+
+
+
+
+
+
+
+      </div>
+<br><br>
+
+
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button style='float:left' type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Participant Modal ends -->
+
+
+
+
+
+
+
+
+
+<div class='row'>
+
+<div class='col-sm-3 well'>
+
+<button class="category_post1" data-toggle="modal" data-target="#myModal_profile" title="">&nbsp;&nbsp;&nbsp;&nbsp; Update Personal Profile</button><br>
+
+<div id="loader_rec"></div>
+<div id="result_rec"></div>
+<div id="data_result"></div>
+
+
+
+<button class="category_post1" data-toggle="modal" data-target="#myModal_agora" title="">&nbsp;&nbsp;&nbsp;&nbsp; Update Agora Video Call API Key</button><br>
+
+<div id="loader_rec_agora"></div>
+<div id="result_rec_agora"></div>
+<div id="data_result_agora"></div>
+
+</div>
+
+
+
+
+<div class='col-sm-9 well'>
+ <center><b style='font-size:20px'>Women Participant List</b> </center><br>
+
+<button class="category_post1" data-toggle="modal" data-target="#myModal_pa" title="">Add Women Participants</button><br>
+
+
+<center>
+<div id="loader_ph"></div>
+<div id="result_ph"></div>
+</center>
+
+
+<div id="data_result_participant"> </div>
+ 	
+				
+   
+
+
+</div>
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- photo Comments Modal starts here-->
+
+<div class="containerx">
+  
+  <div class="modal fade" id="myModal_comment" role="dialog">
+    <div class="modal-dialog  modal-lg modal-appear-center1">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header" style='color:black;background:#ddd;'>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <button type="button" class="pull-right btn btn-default modal_close_btn" data-dismiss="modal">Close</button>
+
+          <h4 class="modal-title">Comments and Discussion System</h4>
+        </div>
+
+        <div class="modal-body">
+          <p>
+
+
+
+<b>Autor DID: </b> <span class="p_author_did"></span><br>
+<b>Recipient DID: </b> <span class="p_recipient_did"></span><br>
+
+
+
+<div class="loader_comment_fetch"></div>
+<div class="result_comment_fetch"></div>
+<div id="data_result_comment" class="comment_hide_on_modal_close"></div>
+
+
+  <div class="result_comment_add"></div>
+<div id="data_result_comment_new"></div>
+
+ <div class="form-group col-sm-12">
+<label> Enter Comment </label>
+<textarea id="" class="comment_msg col-sm-12 form-control" placeholder="Enter Comment"></textarea>
+      </div>
+
+ <div class="form-group col-sm-12">
+	       <div class="loader_comment_add"></div>
+             
+               <input type="button"  class="pull-right btn btn-primary comment_add_btn" value="Add Comment" />
+      </div>
+
+
+
+
+
+
+<br /><br />
+<br /><br />
+<br /><br />
+
+
+</p>
+        </div>
+
+<br /><br />
+
+        <div class="modal-footer" style='color:black;background:#ddd'>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+
+<!-- photo Comments Modal end here-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- video Call Modal starts here-->
+
+<div class="containerx">
+  
+  <div class="modal fade" id="myModal_videocall" role="dialog">
+    <div class="modal-dialog  modal-lg modal-appear-center1">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header" style='color:black;background:#ddd;'>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <button type="button" class="pull-right btn btn-default modal_close_btn" data-dismiss="modal">Close</button>
+
+          <h4 class="modal-title">Video Call System powered by Agora.IO</h4>
+        </div>
+
+        <div class="modal-body">
+          <p>
+
+
+
+
+
+
+<b>Autor DID: </b> <span class="p_author_did"></span><br>
+<b>Recipient DID: </b> <span class="p_recipient_did"></span><br>
+
+
+<input type='hidden' id='chat_agora_appid_value'  class='chat_agora_appid_value_new' value=''>
+<input type='hidden' id='chat_agora_channel_value'  class='chat_agora_channel_value_new' value=''>
+
+<br><br>
+
+               <button id="vcall_btn"  class="pull-right btn btn-primary"> Continue to Video Call</button>
+
+
+
+<br /><br />
+<br /><br />
+<br /><br />
+
+
+</p>
+        </div>
+
+<br /><br />
+
+        <div class="modal-footer" style='color:black;background:#ddd'>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+
+<!-- Video Call Modal end here-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+</body>
+</html>
